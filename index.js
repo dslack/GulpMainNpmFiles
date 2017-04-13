@@ -3,10 +3,30 @@ var path = require('path');
 var callerId = require('caller-id');
 
 module.exports = function(options) {
-  function getMainFile(modulePath) {
+  function getMainFile(modulePath, override) {
     var json = JSON.parse(fs.readFileSync(modulePath + '/package.json'));
-    return modulePath + "/" + (json.main || "index.js");
+    //json.main could be an array..
+      var main = json.main;
+      var paths = [];
+      if (override) {
+        main = override.main;
+      }
+      if (Array.isArray(main)) {
+        paths = main.map(function(x){
+          return modulePath+"/"+x;
+        });
+      } else {
+        paths.push(modulePath + "/" + (main || "index.js"));
+      }
+    return paths
   };
+
+  function getOverride(key) {
+    if (overrides[key]) {
+      return overrides[key];
+    }
+    return null;
+  }
 
   options = options || {};
 
@@ -25,12 +45,17 @@ module.exports = function(options) {
   }
 
   var buffer, packages, keys;
-  buffer = fs.readFileSync(options.packageJsonPath);
-  packages = JSON.parse(buffer.toString());
-  keys = [];
+  var buffer = fs.readFileSync(options.packageJsonPath);
+  var packages = JSON.parse(buffer.toString());
+  var keys = [];
+
+  var overrides = (packages.overrides) ? packages.overrides : {};
+
 
   for (var key in packages.dependencies) {
-    keys.push(getMainFile(options.nodeModulesPath + "/" + key));
+    //is there an override?
+      var override = getOverride(key);
+      keys = keys.concat(getMainFile(options.nodeModulesPath + "/" + key, override));
   }
 
   if (options.devDependencies) {

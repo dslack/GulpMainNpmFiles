@@ -1,12 +1,12 @@
 var mainNpmFiles = require('../');
-var path = require('path');
+var upath = require('upath');
 
 require('should');
 
 describe('main-npm-files', function() {
   function expect(filenames) {
       var expectedFiles = [].concat(filenames).map(function(filename) {
-          return path.join(__dirname, filename);
+          return upath.join(__dirname, filename);
       });
 
       function run(path, options, done) {
@@ -21,6 +21,9 @@ describe('main-npm-files', function() {
           }
 
           var srcFiles = mainNpmFiles(options);
+          srcFiles = srcFiles.map(function(x) {
+              return upath.toUnix(x);
+          })
           srcFiles.should.be.eql(expectedFiles);
 
           if (done) {
@@ -42,6 +45,7 @@ describe('main-npm-files', function() {
   it('should select the expected files with dependency', function(done) {
       expect([
           '/fixtures/module1/index.js',
+          '/fixtures/module1/index2.js',
           '/fixtures/module2/dist/index.js'
       ])
       .fromConfig('/_package.json')

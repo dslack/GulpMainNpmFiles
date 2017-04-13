@@ -3,5 +3,10 @@
   "dependencies": {
     "module1": "*",
     "module2": "*"
+  },
+  "overrides": {
+    "module1": {
+      "main": ["index.js","index2.js"]
+    }
   }
 }
